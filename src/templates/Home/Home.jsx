@@ -1,42 +1,39 @@
-import { useEffect, useState } from 'react';
-import './styles.css';
+import { useEffect, useState } from "react";
+import { useFetch } from "./use-fetch";
 
-const useFetch = (url , options) => {
-  const [result, setResult] = useState(null)
-  const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    setLoading(true)
-    const fetchData = async () => {
-      await new Promise(r => setTimeout(r, 3000))
-      try {
-        const response = await fetch(url, options);
-        const jsonResult = await response.json();
-        setResult(jsonResult);
-        setLoading(false)
-      }
-      catch (err) {
-        setLoading(false)
-        throw err;
-      }
-    }
-
-    fetchData()
-  }, [url])
-
-  return [result,loading]
-}
 
 export const Home = () => {
 
-  const [result, loading] = useFetch('https://jsonplaceholder.typicode.com/posts')
+  const [postId, setPostId] = useState('');
+  const [result, loading] = useFetch('https://jsonplaceholder.typicode.com/posts/' + postId, { headers: { abc: '1' + postId}  })
+
+  // CADA OBJETO CRIADO É DIFERENTE DO OUTRO: {} !== {} 
+  // OBJETOS PODEM CAUSAR MULTIPLAS RENDERIZAÇÕES POR NÃO SEREM UM TIPO PRIMITIVO
+  // CADA VEZ QUE O COMPONENTE É RENDERIZADO, É COMO SE UM NOVO OBJETO FOSSE CRIADO
+
+    useEffect(() => {
+      console.log('ID do post', postId)
+    }, [postId])
 
     if (loading) {
       return <p>Loading ...</p>
     }
+
+    const handleClick = (id) => {
+      setPostId(id)
+    }
     
     if(!loading && result) {
-      console.log(result)
+      return <div>
+        {result?.length > 0 ? result.map(p => (
+          <div key={`post-${p.id}`} onClick={() => handleClick(p.id)}>
+            <p>{p.title}</p>
+          </div>
+        )) : (<div onClick={() => handleClick('')}>
+            <p>{result.title}</p>
+          </div>)
+          }
+      </div>
     }
 
     return <h1>Oi</h1>
