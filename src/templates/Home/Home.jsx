@@ -1,94 +1,45 @@
+import { useEffect, useState } from 'react';
 import './styles.css';
-import {  Component } from 'react'
-import { loadPosts } from '../../utils/load-posts'
-import { Posts } from '../../components/Posts';
-import { Button } from '../../components/Button';
-import { TextInput } from '../../components/TextInput';
 
-  class Home extends Component {
+const useFetch = (url , options) => {
+  const [result, setResult] = useState(null)
+  const [loading, setLoading] = useState(false)
 
-    state = { // state só vai pra frente, não vai pra trás
-      posts: [],
-      allPosts: [],
-      page: 0,
-      postsPerPage: 53,
-      searchValue: ''
+  useEffect(() => {
+    setLoading(true)
+    const fetchData = async () => {
+      await new Promise(r => setTimeout(r, 3000))
+      try {
+        const response = await fetch(url, options);
+        const jsonResult = await response.json();
+        setResult(jsonResult);
+        setLoading(false)
+      }
+      catch (err) {
+        setLoading(false)
+        throw err;
+      }
     }
 
+    fetchData()
+  }, [url])
 
-
-   async componentDidMount() {
-      await this.loadPosts()
-    }
-
-  loadPosts = async () => {
-    const { page, postsPerPage } = this.state
-    const postsAndPhotos = await loadPosts()
-    this.setState({
-      posts: postsAndPhotos.slice(page, postsPerPage),
-      allPosts: postsAndPhotos
-    })
-    }
-
-    loadMorePosts = () => {
-      const {
-        page,
-        postsPerPage,
-        allPosts,
-        posts
-      } = this.state
-      const nextPage = page + postsPerPage
-      const nextPosts = allPosts.slice(nextPage, nextPage + postsPerPage)
-      posts.push(...nextPosts);
-      this.setState({posts, page: nextPage})
-    }
-
-  handleChange = (e) => {
-    const { value } = e.target
-    this.setState({ searchValue: value })
-
-  }
-
-  render() {
-    const { posts, page, postsPerPage, allPosts, searchValue } = this.state
-    const noMorePost = page + postsPerPage >= allPosts.length;
-
-    const filteredPosts = !!searchValue ? posts.filter(post => {
-      return post.title.toLowerCase().includes(searchValue.toLocaleLowerCase())
-    }) : posts;
-
-  return (
-    <section className="container">
-      <div className="search-container">
-      {!!searchValue && (
-          
-            <h1>Search value: {searchValue}</h1>
-        
-      )}
-
-        <TextInput searchValue={searchValue} handleChange={this.handleChange}/>
-      </div>
-      <br />
-      <br />
-      <br />
-
-      {filteredPosts.length > 0 && (
-      <Posts posts={filteredPosts} />
-      )}
-
-      {filteredPosts.length === 0 && (
-      <p>Não existem posts!</p>
-      )}
-      <div className="button-container">
-        {!searchValue && (
-          <Button text="Load More Posts" quandoClica={this.loadMorePosts} disabled={noMorePost}/>
-        )}
-      </div>
-    </section>
-  );
-  }
-
+  return [result,loading]
 }
 
+export const Home = () => {
+
+  const [result, loading] = useFetch('https://jsonplaceholder.typicode.com/posts')
+
+    if (loading) {
+      return <p>Loading ...</p>
+    }
+    
+    if(!loading && result) {
+      console.log(result)
+    }
+
+    return <h1>Oi</h1>
+}
 
 export default Home;
