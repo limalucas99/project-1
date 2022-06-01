@@ -1,91 +1,31 @@
-import { useCallback, useEffect, useState } from "react";
-
-
-const useAsync = (asyncFunction, shouldRun) => {
-  const [state, setState] = useState({
-    result: null,
-    error: null,
-    status: 'idle'
-  })
-  const [error, setError] = useState(null)
-  const [status, setStatus] = useState('idle')
-
-  const run = useCallback(async () => {
-    console.log('EFFECT', new Date().toLocaleString())
-    await new Promise(r => setTimeout(r, 4000))
-
-    setState({
-     result: null,
-     error: null,
-     status: 'pending'
-    })
-
-    return asyncFunction()
-      .then(response => {
-        setState({
-          result: response,
-          error: null,
-          status: 'settled'
-        })
-      })
-      .catch(err => {
-       setState({
-          result: null,
-          error: err,
-          status: 'error'
-        })
-      })
-    }, [asyncFunction])
-
-  useEffect(() => {
-    if(shouldRun) {
-      run()
-    }
-  }, [run, shouldRun])
-
-  return [run, state.result, state.error, state.status]
-
-}
-
-      const fetchData = async () => {
-        await new Promise(r => setTimeout(r, 4000))
-        const data = await fetch('https://jsonplaceholder.typicode.com/posts')
-        const json = await data.json()
-        return json
-      }
-
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 export const Home = () => {
 
-    const [posts, setPosts] = useState(null);
-    const [reFetchData, result, error, status] = useAsync(fetchData, true)
+  const [counted, setCounted] = useState([0, 1, 2, 3, 4])
 
-    const handleClick =  () => {
-         reFetchData()
-      }
+  const divRef = useRef()
 
+  useLayoutEffect(() => { // FAZ O DOM ESPERAR PARA QUE OS ELEMENTOS SEJAM MODIFICADOS SIMULTÂNEAMENTE
+    const now = Date.now() // useLayoutEffect - SÓ ATUALIZA OS ELEMENTOS JUNTOS DPS QUE A EXECUÇÃO TERMINA
+    while (Date.now() < now + 600)
+    divRef.current.scrollTop = divRef.current.scrollHeight;
+  })
 
-    useEffect(() => {
-      setTimeout(() => {
-        reFetchData()
-      }, 6000)
-    }, [reFetchData])
+  const handleClick = () => {
+    setCounted(c => [...c, +c.slice(-1) + 1])
+  }
 
-    if (status === 'idle') {
-      return <pre>idle: Nada executando</pre>
-    }
-
-    if (status === 'pending') {
-      return <pre>pending: Loading...</pre>
-    }
-
-    if (status === 'error') {
-      return <pre>erro: {JSON.stringify(error, null, 2)}</pre>
-    }
-
-    if (status === 'settled') {
-      return <pre onClick={handleClick}>{JSON.stringify(result, null, 2)}</pre>
-    }
+  return (
+    <>
+    <button onClick={handleClick}>Count {counted.slice(-1)}</button>
+    <div ref={divRef} style={{height: '100px', width: '100px', overflowY: 'scroll'}}>
+    {counted.map(c => {
+      return <p key={`c-${c}`}>{c}</p>
+    })}
+    </div> 
+    </>
+  )
 
 }
 
